@@ -1,26 +1,17 @@
 import argparse, socket, sys
 import threading
-import time, schedule
+import time , schedule
 import datetime
-import string
 
 def handle_client_connections(client_socket) :
-    client_ip = client_socket.getpeername()[0]
-    print("Connected to ", client_ip)
-    filename=client_ip + '.txt'
     # Append all the data received to a file with client IP as name
     request = client_socket.recv(1024)
-    while(request is not None):
-        f=open(filename,"a")
-        f.write(request)
-        request=client_socket.recv(1024)
-    f.close()
     print('Received {}'.format(request))
     client_socket.send('ACK!')
     client_socket.close()
 
 def job():
-    bind_ip = socket.gethostbyname(socket.gethostname())
+    bind_ip = '172.16.42.78'
     bind_port = 1060
 
     print("TCP Server up")
@@ -30,19 +21,18 @@ def job():
     server_socket.listen(5) #max backlog of connections
     print("Listening")
 
-    while (datetime.datetime.now().time() != "15:00:00"):
+    while (datetime.now().time() != "15:00:00"):
         client_socket, address = server_socket.accept()
         print("Accepted connection from {}:{}".format(address[0], address[1])) 
         client_handler = threading.Thread(
-            target=handle_client_connections,
-            args=(client_socket,) 
+            target=handle_client_connection,
+            args=(client_socket,)  # without comma you'd get a... TypeError: handle_client_connection() argument after * must be a sequence, not _socketobject
         )
         client_handler.start()
 
 if __name__ =="__main__":
-    print("Server program")
-    #schedule.every(7).days.at("12:50").do(job)    
-    job()
+    schedule.every(7).day.at("12:50").do(job)    
+
     while True:
         schedule.run_pending()
         time.sleep(1)
